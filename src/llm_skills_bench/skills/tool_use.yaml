@@ -1,0 +1,169 @@
+tasks:
+  - task_id: tool_use_001
+    skill: tool_use
+    prompt_template: |
+      Generate a JSON object representing a function call to `get_weather`
+      with the following parameters: location set to "San Francisco, CA" and
+      units set to "celsius". Output only the JSON object.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: easy
+    tags: [json, function_call, tool_invocation]
+    metadata:
+      format_type: json
+      required_keys: [function, parameters]
+      function_name: get_weather
+      required_params: [location, units]
+
+  - task_id: tool_use_002
+    skill: tool_use
+    prompt_template: |
+      Extract the following entities from this text and output them as a JSON
+      object with keys "name", "email", and "phone":
+
+      "Please contact John Smith at john.smith@example.com or call him on
+      +1-555-867-5309 for further details."
+
+      Output only the JSON object.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: easy
+    tags: [json, entity_extraction, structured_output]
+    metadata:
+      format_type: json
+      required_keys: [name, email, phone]
+
+  - task_id: tool_use_003
+    skill: tool_use
+    prompt_template: |
+      Generate a JSON object for a database query with the following fields:
+      "table" (string, set to "users"), "filters" (an object with key "active"
+      set to true), and "limit" (integer, set to 100). Output only the JSON
+      object.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: easy
+    tags: [json, database, structured_output]
+    metadata:
+      format_type: json
+      required_keys: [table, filters, limit]
+
+  - task_id: tool_use_004
+    skill: tool_use
+    prompt_template: |
+      Convert the following human-readable date to ISO 8601 format
+      (YYYY-MM-DD): "March 15, 2024". Output only the ISO 8601 date string.
+    expected_output: "2024-03-15"
+    scoring_method: fuzzy
+    difficulty: medium
+    tags: [date_formatting, iso8601, normalization]
+    metadata:
+      fuzzy_threshold: 90
+
+  - task_id: tool_use_005
+    skill: tool_use
+    prompt_template: |
+      Generate a JSON object representing a function call to `search_products`
+      with these parameters: query set to "wireless headphones", category set
+      to "electronics", max_price set to 150, and sort_by set to "rating".
+      Output only the JSON object with a top-level "function" key and a
+      "parameters" key.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: medium
+    tags: [json, function_call, tool_invocation, e_commerce]
+    metadata:
+      format_type: json
+      required_keys: [function, parameters]
+      function_name: search_products
+      required_params: [query, category, max_price, sort_by]
+
+  - task_id: tool_use_006
+    skill: tool_use
+    prompt_template: |
+      Extract structured product information from this text and output it as
+      a JSON object with keys "product_name", "price" (number), "currency"
+      (string), and "in_stock" (boolean):
+
+      "The Sony WH-1000XM5 headphones are currently available for $349.99
+      USD and are in stock."
+
+      Output only the JSON object.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: medium
+    tags: [json, extraction, structured_output, e_commerce]
+    metadata:
+      format_type: json
+      required_keys: [product_name, price, currency, in_stock]
+
+  - task_id: tool_use_007
+    skill: tool_use
+    prompt_template: |
+      Normalize the following address to a standard format and output it as a
+      JSON object with keys "street", "city", "state", and "zip":
+
+      "1600 Pennsylvania Ave NW Washington DC 20500"
+
+      Output only the JSON object.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: medium
+    tags: [json, address_normalization, structured_output]
+    metadata:
+      format_type: json
+      required_keys: [street, city, state, zip]
+
+  - task_id: tool_use_008
+    skill: tool_use
+    prompt_template: |
+      Generate a JSON request body for a REST API call to create a new user.
+      The body must include: "username" (string "alice_smith"), "email"
+      (string "alice@example.com"), "role" (string "editor"), and "active"
+      (boolean true). Output only the JSON object.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: medium
+    tags: [json, api, rest, structured_output]
+    metadata:
+      format_type: json
+      required_keys: [username, email, role, active]
+
+  - task_id: tool_use_009
+    skill: tool_use
+    prompt_template: |
+      You have access to two tools: `get_user(user_id: int)` which returns
+      user details, and `send_email(to: str, subject: str, body: str)` which
+      sends an email. Generate a JSON array of two sequential tool calls to:
+      (1) get user with id 42, then (2) send a welcome email to
+      "user@example.com" with subject "Welcome!" and body "Hello, welcome to
+      our platform!". Output only the JSON array.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: hard
+    tags: [json, multi_tool, function_call, chaining]
+    metadata:
+      format_type: json
+      expected_type: array
+      expected_length: 2
+      required_functions: [get_user, send_email]
+
+  - task_id: tool_use_010
+    skill: tool_use
+    prompt_template: |
+      Generate a JSON object describing a function signature for a tool called
+      `calculate_mortgage` that takes: "principal" (number, required, the loan
+      amount), "annual_rate" (number, required, annual interest rate as
+      decimal), "years" (integer, required, loan term in years), and
+      "monthly_payment" (number, optional, override for monthly payment).
+      Use the OpenAI function-calling schema format with "name",
+      "description", and "parameters" (JSON Schema object) keys.
+      Output only the JSON object.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: hard
+    tags: [json, function_schema, openai, tool_definition]
+    metadata:
+      format_type: json
+      required_keys: [name, description, parameters]
+      function_name: calculate_mortgage

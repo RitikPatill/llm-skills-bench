@@ -1,0 +1,183 @@
+tasks:
+  - task_id: coding_001
+    skill: coding
+    prompt_template: |
+      Write a Python function called `solution` that takes two integers `a`
+      and `b` and returns their sum.
+    expected_output: null
+    scoring_method: code_execution
+    difficulty: easy
+    tags: [arithmetic, basic]
+    metadata:
+      test_code: |
+        assert solution(2, 3) == 5
+        assert solution(-1, 1) == 0
+        assert solution(0, 0) == 0
+        assert solution(-5, -3) == -8
+
+  - task_id: coding_002
+    skill: coding
+    prompt_template: |
+      Write a Python function called `solution` that takes a string `s` and
+      returns True if it is a palindrome (reads the same forwards and
+      backwards, ignoring case), False otherwise.
+    expected_output: null
+    scoring_method: code_execution
+    difficulty: easy
+    tags: [strings, basic]
+    metadata:
+      test_code: |
+        assert solution("racecar") == True
+        assert solution("hello") == False
+        assert solution("A") == True
+        assert solution("Madam") == True
+        assert solution("") == True
+
+  - task_id: coding_003
+    skill: coding
+    prompt_template: |
+      Write a Python function called `solution` that takes a non-negative
+      integer `n` and returns the nth Fibonacci number (0-indexed, so
+      solution(0)==0, solution(1)==1, solution(2)==1).
+    expected_output: null
+    scoring_method: code_execution
+    difficulty: easy
+    tags: [recursion, dynamic_programming, basic]
+    metadata:
+      test_code: |
+        assert solution(0) == 0
+        assert solution(1) == 1
+        assert solution(2) == 1
+        assert solution(6) == 8
+        assert solution(10) == 55
+
+  - task_id: coding_004
+    skill: coding
+    prompt_template: |
+      Write a Python function called `solution` that takes a nested list
+      (arbitrarily deep) and returns a new flat list containing all the
+      integers in order. Example: solution([1, [2, [3, 4]], 5]) == [1, 2, 3, 4, 5]
+    expected_output: null
+    scoring_method: code_execution
+    difficulty: easy
+    tags: [lists, recursion]
+    metadata:
+      test_code: |
+        assert solution([1, [2, [3, 4]], 5]) == [1, 2, 3, 4, 5]
+        assert solution([]) == []
+        assert solution([[1], [2], [3]]) == [1, 2, 3]
+        assert solution([1, [2, [3, [4, [5]]]]]) == [1, 2, 3, 4, 5]
+
+  - task_id: coding_005
+    skill: coding
+    prompt_template: |
+      Write a Python function called `solution` that takes a list of integers
+      and returns the element that appears most frequently. If there is a tie,
+      return the smallest element among the tied elements.
+    expected_output: null
+    scoring_method: code_execution
+    difficulty: medium
+    tags: [lists, counting, sorting]
+    metadata:
+      test_code: |
+        assert solution([1, 2, 2, 3]) == 2
+        assert solution([4, 4, 1, 1]) == 1
+        assert solution([5]) == 5
+        assert solution([3, 3, 2, 2, 1]) == 2
+
+  - task_id: coding_006
+    skill: coding
+    prompt_template: |
+      Write a Python function called `solution` that takes a string containing
+      only the characters '(', ')', '{', '}', '[', and ']', and returns True
+      if the brackets are balanced (every open bracket has a matching close
+      bracket in the correct order), False otherwise.
+    expected_output: null
+    scoring_method: code_execution
+    difficulty: medium
+    tags: [strings, stack, data_structures]
+    metadata:
+      test_code: |
+        assert solution("()") == True
+        assert solution("()[]{}")  == True
+        assert solution("(]") == False
+        assert solution("([)]") == False
+        assert solution("{[]}") == True
+        assert solution("") == True
+
+  - task_id: coding_007
+    skill: coding
+    prompt_template: |
+      Write a Python function called `solution` that takes a list of intervals
+      where each interval is [start, end], merges all overlapping intervals,
+      and returns the resulting list of merged intervals sorted by start time.
+      Example: solution([[1,3],[2,6],[8,10],[15,18]]) == [[1,6],[8,10],[15,18]]
+    expected_output: null
+    scoring_method: code_execution
+    difficulty: medium
+    tags: [arrays, sorting, intervals]
+    metadata:
+      test_code: |
+        assert solution([[1,3],[2,6],[8,10],[15,18]]) == [[1,6],[8,10],[15,18]]
+        assert solution([[1,4],[4,5]]) == [[1,5]]
+        assert solution([[1,4]]) == [[1,4]]
+        assert solution([[1,4],[2,3]]) == [[1,4]]
+
+  - task_id: coding_008
+    skill: coding
+    prompt_template: |
+      Write a Python function called `solution` that takes a list of integers
+      `nums` and an integer `target`, and returns the indices of the two
+      numbers that add up to `target` as a sorted list [i, j] where i < j.
+      You may assume exactly one solution exists.
+    expected_output: null
+    scoring_method: code_execution
+    difficulty: medium
+    tags: [arrays, hash_map, two_pointers]
+    metadata:
+      test_code: |
+        assert solution([2, 7, 11, 15], 9) == [0, 1]
+        assert solution([3, 2, 4], 6) == [1, 2]
+        assert solution([3, 3], 6) == [0, 1]
+
+  - task_id: coding_009
+    skill: coding
+    prompt_template: |
+      Write a Python function called `solution` that takes a list of strings
+      and groups anagrams together. Return a list of groups; within each group
+      strings may be in any order, but the groups themselves must be sorted by
+      the length of the group (ascending) and then lexicographically by the
+      sorted group contents.
+    expected_output: null
+    scoring_method: code_execution
+    difficulty: hard
+    tags: [strings, hash_map, sorting]
+    metadata:
+      test_code: |
+        result = solution(["eat", "tea", "tan", "ate", "nat", "bat"])
+        # Normalise each group
+        norm = [sorted(g) for g in result]
+        norm.sort(key=lambda g: (len(g), g))
+        assert norm == [["bat"], ["nat", "tan"], ["ate", "eat", "tea"]]
+        assert solution([""]) == [[""]]
+        assert solution(["a"]) == [["a"]]
+
+  - task_id: coding_010
+    skill: coding
+    prompt_template: |
+      Write a Python function called `solution` that takes a sorted list of
+      integers `nums` and a target integer `target`, and returns the index of
+      `target` in the list using binary search. If `target` is not present,
+      return -1. Do not use Python's built-in bisect module.
+    expected_output: null
+    scoring_method: code_execution
+    difficulty: hard
+    tags: [binary_search, arrays, algorithms]
+    metadata:
+      test_code: |
+        assert solution([-1, 0, 3, 5, 9, 12], 9) == 4
+        assert solution([-1, 0, 3, 5, 9, 12], 2) == -1
+        assert solution([5], 5) == 0
+        assert solution([5], 6) == -1
+        assert solution([1, 2, 3, 4, 5], 1) == 0
+        assert solution([1, 2, 3, 4, 5], 5) == 4
