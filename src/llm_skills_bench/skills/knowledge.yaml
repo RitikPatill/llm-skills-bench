@@ -1,0 +1,119 @@
+tasks:
+  - task_id: knowledge_001
+    skill: knowledge
+    prompt_template: |
+      In what year was the Python programming language first released to the
+      public? Give only the four-digit year.
+    expected_output: "1991"
+    scoring_method: fuzzy
+    difficulty: easy
+    tags: [python, history, programming_languages]
+    metadata:
+      fuzzy_threshold: 80
+
+  - task_id: knowledge_002
+    skill: knowledge
+    prompt_template: |
+      What does the acronym HTTP stand for? Give the full expansion only.
+    expected_output: "HyperText Transfer Protocol"
+    scoring_method: fuzzy
+    difficulty: easy
+    tags: [networking, acronyms, web]
+    metadata:
+      fuzzy_threshold: 80
+
+  - task_id: knowledge_003
+    skill: knowledge
+    prompt_template: |
+      Who invented the World Wide Web (WWW)? Give only the person's full name.
+    expected_output: "Tim Berners-Lee"
+    scoring_method: fuzzy
+    difficulty: easy
+    tags: [history, web, inventors]
+    metadata:
+      fuzzy_threshold: 80
+
+  - task_id: knowledge_004
+    skill: knowledge
+    prompt_template: |
+      What is the time complexity of binary search on a sorted array of n
+      elements? Use Big-O notation (e.g. O(n)).
+    expected_output: "O(log n)"
+    scoring_method: fuzzy
+    difficulty: medium
+    tags: [algorithms, complexity, data_structures]
+    metadata:
+      fuzzy_threshold: 80
+
+  - task_id: knowledge_005
+    skill: knowledge
+    prompt_template: |
+      In the CAP theorem for distributed systems, what do the three letters
+      C, A, and P stand for? Give the three words in order separated by
+      commas (e.g. "X, Y, Z").
+    expected_output: "Consistency, Availability, Partition tolerance"
+    scoring_method: fuzzy
+    difficulty: medium
+    tags: [distributed_systems, databases, theory]
+    metadata:
+      fuzzy_threshold: 80
+
+  - task_id: knowledge_006
+    skill: knowledge
+    prompt_template: |
+      What sorting algorithm does Python's built-in `sorted()` function use?
+      Give only the algorithm name.
+    expected_output: "Timsort"
+    scoring_method: fuzzy
+    difficulty: medium
+    tags: [python, algorithms, sorting]
+    metadata:
+      fuzzy_threshold: 80
+
+  - task_id: knowledge_007
+    skill: knowledge
+    prompt_template: |
+      In the context of databases, what does the acronym ACID stand for?
+      Give the four words in order separated by commas.
+    expected_output: "Atomicity, Consistency, Isolation, Durability"
+    scoring_method: fuzzy
+    difficulty: easy
+    tags: [databases, acronyms, transactions]
+    metadata:
+      fuzzy_threshold: 80
+
+  - task_id: knowledge_008
+    skill: knowledge
+    prompt_template: |
+      What is the key difference between a process and a thread in an
+      operating system? Answer in one sentence.
+    expected_output: "A process has its own memory space while threads share memory within the same process."
+    scoring_method: fuzzy
+    difficulty: medium
+    tags: [operating_systems, concurrency, computer_science]
+    metadata:
+      fuzzy_threshold: 80
+
+  - task_id: knowledge_009
+    skill: knowledge
+    prompt_template: |
+      What is the maximum value of a 32-bit signed integer? Give only the
+      numeric value.
+    expected_output: "2147483647"
+    scoring_method: fuzzy
+    difficulty: easy
+    tags: [computer_science, binary, integers]
+    metadata:
+      fuzzy_threshold: 80
+
+  - task_id: knowledge_010
+    skill: knowledge
+    prompt_template: |
+      What is the primary purpose of Docker containers? Answer in one
+      sentence.
+    expected_output: "Docker containers package an application and its dependencies into an isolated, portable unit that runs consistently across environments."
+    scoring_method: fuzzy
+    difficulty: medium
+    tags: [devops, containers, infrastructure]
+    metadata:
+      fuzzy_threshold: 80

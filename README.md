@@ -8,13 +8,24 @@ Every team building on LLMs needs a reproducible answer to: *"Is model X actuall
 
 ## What works now
 
-M1 — scaffold complete:
+M2 — skill catalog complete:
+
+- Pydantic v2 `SkillTask` schema (`schema.py`) with `ScoringMethod` and `Difficulty` enums
+- `catalog.py` loads and validates all YAML files from `src/llm_skills_bench/skills/`
+- 50 benchmark tasks across 5 YAML files:
+  - `coding.yaml` — 10 tasks, `code_execution` scoring (sum, palindrome, Fibonacci, …)
+  - `reasoning.yaml` — 10 tasks, `fuzzy` + `llm_judge` scoring
+  - `knowledge.yaml` — 10 tasks, `fuzzy` scoring with reference answers
+  - `instruction_following.yaml` — 10 tasks, `format_check` scoring
+  - `tool_use.yaml` — 10 tasks, `format_check` + `fuzzy` scoring
+- `llm-bench list` pretty-prints the full catalog as a `rich` table with task count summary
+
+M1 — scaffold:
 
 - Python package (`src/llm_skills_bench/`) installable via `pip install -e .`
-- Click CLI with `run`, `serve`, and `list` commands registered (stubs — print "Not implemented yet")
-- `pyproject.toml` with all runtime dependencies pinned (`openai`, `anthropic`, `fastapi`, `pyyaml`, `thefuzz`, `rich`, and more)
-- MIT license, `.gitignore`, placeholder `requirements.txt`
-- Scaffold test suite in `tests/`
+- Click CLI with `run`, `serve`, and `list` commands
+- `pyproject.toml` with all runtime dependencies pinned
+- MIT license, `.gitignore`, `requirements.txt`
 
 ## Skills
 
@@ -34,14 +45,17 @@ Five built-in skill dimensions, each configurable via YAML:
 llm-skills-bench/
 ├── src/llm_skills_bench/
 │   ├── __init__.py
-│   ├── cli.py          # Click CLI: run, serve, list (stubs — M1)
+│   ├── cli.py          # Click CLI: run, serve, list
+│   ├── schema.py       # Pydantic SkillTask model (M2)
+│   ├── catalog.py      # YAML loader (M2)
+│   ├── skills/         # YAML skill catalog — 50 tasks (M2)
 │   ├── adapters/       # OpenAI + Anthropic model adapters (planned M3)
-│   ├── skills/         # YAML skill catalog loader (planned M2)
-│   ├── scoring/        # exact, fuzzy, exec, llm-judge (planned M2)
+│   ├── scoring/        # exact, fuzzy, code_execution, format_check, llm-judge (planned M3)
 │   └── dashboard/      # FastAPI + Chart.js server (planned M4)
-├── skills/             # YAML skill definitions (planned M2)
 ├── results/            # Timestamped JSON run outputs (planned M3)
 └── tests/
+    ├── test_scaffold.py   # Package + CLI smoke tests (M1)
+    └── test_catalog.py    # Schema validation + catalog loading (M2)
 ```
 
 ```
@@ -61,7 +75,9 @@ llm-skills-bench/
                        │
           ┌────────────▼────────────┐
           │      Scorer             │
-          │  exact | fuzzy | exec   │
+          │  exact | fuzzy          │
+          │  code_execution         │
+          │  format_check           │
           │  llm-judge              │
           └─────────────────────────┘
 
@@ -77,12 +93,16 @@ llm-bench --help
 
 ### CLI
 
-The commands below are registered and accessible via `--help`. They are stubs in M1 and will be implemented in M2–M3.
+```bash
+# List the full skill catalog (50 tasks across 5 skill dimensions)
+llm-bench list
 
-```
+# Filter by a custom skills directory
+llm-bench list --skills-dir /path/to/skills
+
+# Coming in M3:
 llm-bench run --model gpt-4o --skills coding,reasoning
 llm-bench serve --port 8080
-llm-bench list
 ```
 
 Set your API key before running:
@@ -98,7 +118,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 | Milestone | Status | Description |
 |---|---|---|
 | M1 | ✅ Done | Scaffold, README, pyproject.toml |
-| M2 | Planned | YAML skill catalog + scoring engine (~50 tasks) |
+| M2 | ✅ Done | YAML skill catalog (50 tasks), `llm-bench list` |
 | M3 | Planned | Model adapters (OpenAI, Anthropic) + `run` command |
 | M4 | Planned | FastAPI dashboard: radar chart, run history, comparison |
 

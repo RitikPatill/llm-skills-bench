@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "llm-skills-bench"
@@ -26,3 +26,9 @@ llm-bench = "llm_skills_bench.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"llm_skills_bench" = ["skills/*.yaml"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

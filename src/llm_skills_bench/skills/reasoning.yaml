@@ -1,0 +1,139 @@
+tasks:
+  - task_id: reasoning_001
+    skill: reasoning
+    prompt_template: |
+      All mammals are warm-blooded. Whales are mammals. Are whales
+      warm-blooded? Answer with a single word: Yes or No.
+    expected_output: "Yes"
+    scoring_method: fuzzy
+    difficulty: easy
+    tags: [syllogism, logic]
+    metadata:
+      fuzzy_threshold: 85
+
+  - task_id: reasoning_002
+    skill: reasoning
+    prompt_template: |
+      A train travels at 60 km/h. How many minutes does it take to travel
+      45 km? Give only the numeric answer (an integer).
+    expected_output: "45"
+    scoring_method: fuzzy
+    difficulty: easy
+    tags: [arithmetic, word_problem, speed_distance]
+    metadata:
+      fuzzy_threshold: 85
+
+  - task_id: reasoning_003
+    skill: reasoning
+    prompt_template: |
+      What is the next number in the sequence: 2, 6, 18, 54, ?
+      Give only the numeric answer.
+    expected_output: "162"
+    scoring_method: fuzzy
+    difficulty: easy
+    tags: [sequences, patterns, arithmetic]
+    metadata:
+      fuzzy_threshold: 85
+
+  - task_id: reasoning_004
+    skill: reasoning
+    prompt_template: |
+      Alice, Bob, and Carol each have a different pet: a cat, a dog, and a
+      fish. Alice does not have the cat. Bob does not have the dog. Carol does
+      not have the fish. What pet does each person have? List each person and
+      their pet on a separate line in the format "Name: pet".
+    expected_output: null
+    scoring_method: llm_judge
+    difficulty: medium
+    tags: [logic, constraint_satisfaction, deduction]
+    metadata:
+      judge_criteria: |
+        The correct answer is: Alice has the dog, Bob has the fish,
+        Carol has the cat. Award full marks only if all three assignments
+        are correct.
+
+  - task_id: reasoning_005
+    skill: reasoning
+    prompt_template: |
+      A shirt originally costs $80. It is first discounted by 25%, then the
+      discounted price is increased by 10%. What is the final price in dollars?
+      Give only the numeric answer (e.g. 66).
+    expected_output: "66"
+    scoring_method: fuzzy
+    difficulty: medium
+    tags: [arithmetic, percentages, word_problem]
+    metadata:
+      fuzzy_threshold: 85
+
+  - task_id: reasoning_006
+    skill: reasoning
+    prompt_template: |
+      A fair coin is flipped three times. What is the probability of getting
+      exactly two heads? Express your answer as a fraction in the form a/b
+      (e.g. 3/8).
+    expected_output: "3/8"
+    scoring_method: fuzzy
+    difficulty: medium
+    tags: [probability, combinatorics]
+    metadata:
+      fuzzy_threshold: 85
+
+  - task_id: reasoning_007
+    skill: reasoning
+    prompt_template: |
+      A bat and a ball together cost $1.10. The bat costs $1.00 more than
+      the ball. How much does the ball cost in cents? Give only the numeric
+      answer.
+    expected_output: "5"
+    scoring_method: fuzzy
+    difficulty: medium
+    tags: [arithmetic, word_problem, cognitive_bias]
+    metadata:
+      fuzzy_threshold: 85
+
+  - task_id: reasoning_008
+    skill: reasoning
+    prompt_template: |
+      Explain the Monty Hall problem. A contestant picks door 1 out of 3;
+      the host opens door 3 to reveal a goat. Should the contestant switch to
+      door 2 or stay with door 1 to maximise their chance of winning the car?
+      Give a clear explanation including the probabilities involved.
+    expected_output: null
+    scoring_method: llm_judge
+    difficulty: hard
+    tags: [probability, conditional_probability, explanation]
+    metadata:
+      judge_criteria: |
+        The answer should recommend switching. It should state that switching
+        wins with probability 2/3 and staying wins with probability 1/3.
+        Award full marks for a correct recommendation with a correct
+        probability explanation.
+
+  - task_id: reasoning_009
+    skill: reasoning
+    prompt_template: |
+      What is the sum of all digits of the number 99^2? Give only the
+      numeric answer.
+    expected_output: "18"
+    scoring_method: fuzzy
+    difficulty: hard
+    tags: [arithmetic, number_theory]
+    metadata:
+      fuzzy_threshold: 85
+
+  - task_id: reasoning_010
+    skill: reasoning
+    prompt_template: |
+      Five people (A, B, C, D, E) are seated in a row. A is not next to B.
+      C is between D and E. B is to the left of D. E is at one end. List one
+      valid left-to-right seating arrangement that satisfies all constraints,
+      as five letters separated by spaces.
+    expected_output: null
+    scoring_method: llm_judge
+    difficulty: hard
+    tags: [logic, constraint_satisfaction, combinatorics]
+    metadata:
+      judge_criteria: |
+        Valid arrangements include "B C D A E" and others satisfying: E at
+        one end; C between D and E; B left of D; A not adjacent to B.
+        Accept any arrangement that satisfies ALL four constraints.

@@ -1,0 +1,140 @@
+tasks:
+  - task_id: instruction_following_001
+    skill: instruction_following
+    prompt_template: |
+      List exactly 5 programming languages as a numbered list. Use the format:
+      1. Language
+      2. Language
+      ... and so on. Output nothing else.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: easy
+    tags: [numbered_list, formatting]
+    metadata:
+      format_type: numbered_list
+      expected_count: 5
+
+  - task_id: instruction_following_002
+    skill: instruction_following
+    prompt_template: |
+      Explain what a variable is in programming. Your answer must be exactly
+      3 sentences — no more, no fewer.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: easy
+    tags: [sentence_count, formatting]
+    metadata:
+      format_type: sentence_count
+      expected_count: 3
+
+  - task_id: instruction_following_003
+    skill: instruction_following
+    prompt_template: |
+      Output a valid JSON object with exactly two keys: "name" (a string
+      containing any person's name) and "age" (an integer between 1 and 120).
+      Output only the JSON object with no additional text.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: easy
+    tags: [json, formatting, structured_output]
+    metadata:
+      format_type: json
+      required_keys: [name, age]
+
+  - task_id: instruction_following_004
+    skill: instruction_following
+    prompt_template: |
+      Write a haiku about Python programming. A haiku has exactly three lines
+      with 5, 7, and 5 syllables respectively. Output only the haiku.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: medium
+    tags: [haiku, creative, syllables]
+    metadata:
+      format_type: haiku
+      syllable_pattern: [5, 7, 5]
+
+  - task_id: instruction_following_005
+    skill: instruction_following
+    prompt_template: |
+      Describe what a compiler does in exactly one sentence. Your entire
+      response must be in UPPERCASE letters only.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: easy
+    tags: [uppercase, formatting]
+    metadata:
+      format_type: uppercase
+
+  - task_id: instruction_following_006
+    skill: instruction_following
+    prompt_template: |
+      Output a JSON array containing exactly 5 different color names as
+      strings. Output only the JSON array with no additional text.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: easy
+    tags: [json, array, formatting]
+    metadata:
+      format_type: json
+      expected_type: array
+      expected_length: 5
+
+  - task_id: instruction_following_007
+    skill: instruction_following
+    prompt_template: |
+      List exactly 3 pros and 3 cons of using microservices architecture.
+      Format your response as two sections labeled "Pros:" and "Cons:", each
+      containing a numbered list of exactly 3 items.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: medium
+    tags: [numbered_list, sections, formatting]
+    metadata:
+      format_type: pros_cons
+      pros_count: 3
+      cons_count: 3
+
+  - task_id: instruction_following_008
+    skill: instruction_following
+    prompt_template: |
+      Summarise what machine learning is in 50 words or fewer. Output only
+      the summary with no additional text.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: medium
+    tags: [word_limit, summary, formatting]
+    metadata:
+      format_type: word_limit
+      max_words: 50
+
+  - task_id: instruction_following_009
+    skill: instruction_following
+    prompt_template: |
+      Create a markdown table comparing three programming languages (Python,
+      JavaScript, and Go) across three attributes: Typing, Primary Use, and
+      Speed. The table must have exactly 4 columns (Language, Typing, Primary
+      Use, Speed) and 3 data rows plus a header row. Output only the markdown
+      table.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: medium
+    tags: [markdown_table, formatting, structured_output]
+    metadata:
+      format_type: markdown_table
+      expected_columns: 4
+      expected_rows: 3
+
+  - task_id: instruction_following_010
+    skill: instruction_following
+    prompt_template: |
+      Write a sentence of exactly 8 words where every word starts with the
+      letter 'S'. Output only the sentence.
+    expected_output: null
+    scoring_method: format_check
+    difficulty: hard
+    tags: [word_constraint, alliteration, formatting]
+    metadata:
+      format_type: letter_constraint
+      starting_letter: S
+      word_count: 8
