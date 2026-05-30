@@ -53,9 +53,18 @@ def run(model, skills, results_dir, judge_model):
 
 @main.command()
 @click.option("--port", default=8080, show_default=True, help="Port to listen on.")
-def serve(port):
+@click.option("--results-dir", default="./results", show_default=True,
+              type=click.Path(), help="Directory containing result JSON files.")
+def serve(port, results_dir):
     """Start the web dashboard server."""
-    click.echo("Not implemented yet")
+    import uvicorn
+    from llm_skills_bench.dashboard import create_app
+
+    results_path = Path(results_dir)
+    results_path.mkdir(parents=True, exist_ok=True)
+    app = create_app(results_path)
+    click.echo(f"Dashboard at http://localhost:{port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 
 @main.command(name="list")
