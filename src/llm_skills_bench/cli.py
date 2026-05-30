@@ -16,9 +16,39 @@ def main():
 @main.command()
 @click.option("--model", required=True, help="Model identifier (e.g. gpt-4o, claude-3-5-sonnet).")
 @click.option("--skills", default="", help="Comma-separated skill names to evaluate.")
-def run(model, skills):
+@click.option("--results-dir", default="./results", show_default=True, type=click.Path())
+@click.option("--judge-model", default=None, help="Model for llm_judge scoring (defaults to --model).")
+def run(model, skills, results_dir, judge_model):
     """Run the benchmark against a model."""
-    click.echo("Not implemented yet")
+    from llm_skills_bench.adapters import get_adapter
+    from llm_skills_bench.runner import run_benchmark
+
+    skills_filter = [s.strip() for s in skills.split(",") if s.strip()]
+    adapter = get_adapter(model)
+    judge_adapter = get_adapter(judge_model) if judge_model else adapter
+
+    catalog = load_catalog()
+    task_count = len(
+        [t for t in catalog if not skills_filter or t.skill.lower() in [s.lower() for s in skills_filter]]
+    )
+    rprint(f"[bold]Running[/bold] {task_count} tasks with model [cyan]{model}[/cyan]")
+
+    result = run_benchmark(
+        model=model,
+        skills_filter=skills_filter,
+        adapter=adapter,
+        judge_adapter=judge_adapter,
+        catalog=catalog,
+        results_dir=Path(results_dir),
+    )
+
+    table = Table(title="Results Summary")
+    table.add_column("Skill", style="magenta")
+    table.add_column("Mean Score", style="cyan")
+    for skill, mean in sorted(result.summary.items()):
+        table.add_row(skill, f"{mean:.2%}")
+    rprint(table)
+    rprint(f"\nResults saved to [bold]{Path(results_dir) / result.run_id}.json[/bold]")
 
 
 @main.command()

@@ -8,6 +8,15 @@ Every team building on LLMs needs a reproducible answer to: *"Is model X actuall
 
 ## What works now
 
+M3 — eval runner + model adapters:
+
+- `adapters.py`: `ModelAdapter` ABC with `OpenAIAdapter` (`gpt-*`, `o1-*`, `o3-*`), `AnthropicAdapter` (`claude-*`), and `get_adapter()` factory
+- `scorers.py`: five scoring functions — `score_exact`, `score_fuzzy`, `score_code_execution`, `score_format_check`, `score_llm_judge` — plus `score_task()` dispatcher
+- `runner.py`: `run_benchmark()` — filters catalog, calls model, scores each task, writes timestamped JSON to `./results/`
+- `llm-bench run --model gpt-4o --skills coding,reasoning` is fully operational
+  - `--results-dir` (default `./results`) and `--judge-model` options added
+  - Per-skill summary table on completion; results persisted as timestamped JSON under `./results/`
+
 M2 — skill catalog complete:
 
 - Pydantic v2 `SkillTask` schema (`schema.py`) with `ScoringMethod` and `Difficulty` enums
@@ -48,14 +57,16 @@ llm-skills-bench/
 │   ├── cli.py          # Click CLI: run, serve, list
 │   ├── schema.py       # Pydantic SkillTask model (M2)
 │   ├── catalog.py      # YAML loader (M2)
+│   ├── adapters.py     # ModelAdapter ABC + OpenAI/Anthropic + get_adapter() (M3)
+│   ├── scorers.py      # exact, fuzzy, code_execution, format_check, llm-judge (M3)
+│   ├── runner.py       # run_benchmark(), TaskResult, RunResult (M3)
 │   ├── skills/         # YAML skill catalog — 50 tasks (M2)
-│   ├── adapters/       # OpenAI + Anthropic model adapters (planned M3)
-│   ├── scoring/        # exact, fuzzy, code_execution, format_check, llm-judge (planned M3)
 │   └── dashboard/      # FastAPI + Chart.js server (planned M4)
-├── results/            # Timestamped JSON run outputs (planned M3)
+├── results/            # Timestamped JSON run outputs (written by M3 runner)
 └── tests/
     ├── test_scaffold.py   # Package + CLI smoke tests (M1)
-    └── test_catalog.py    # Schema validation + catalog loading (M2)
+    ├── test_catalog.py    # Schema validation + catalog loading (M2)
+    └── test_runner.py     # Scorer unit tests + run_benchmark mock integration (M3)
 ```
 
 ```
@@ -100,8 +111,13 @@ llm-bench list
 # Filter by a custom skills directory
 llm-bench list --skills-dir /path/to/skills
 
-# Coming in M3:
+# Run the benchmark (M3)
 llm-bench run --model gpt-4o --skills coding,reasoning
+llm-bench run --model claude-3-5-sonnet-20241022 --skills knowledge
+llm-bench run --model gpt-4o  # all skills
+llm-bench run --model gpt-4o --judge-model gpt-4o-mini  # cheaper judge
+
+# Coming in M4:
 llm-bench serve --port 8080
 ```
 
@@ -119,7 +135,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 |---|---|---|
 | M1 | ✅ Done | Scaffold, README, pyproject.toml |
 | M2 | ✅ Done | YAML skill catalog (50 tasks), `llm-bench list` |
-| M3 | Planned | Model adapters (OpenAI, Anthropic) + `run` command |
+| M3 | ✅ Done | Model adapters (OpenAI, Anthropic) + `run` command, scorers, JSON results |
 | M4 | Planned | FastAPI dashboard: radar chart, run history, comparison |
 
 ## License
