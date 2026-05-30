@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LLM Skills Bench — Dashboard</title>
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    crossorigin="anonymous"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+  <style>
+    body { padding: 1.5rem; background: #f8f9fa; }
+    #radar-wrap { max-width: 420px; margin: auto; }
+    #history-wrap { max-height: 320px; overflow-y: auto; }
+    .empty-state { color: #6c757d; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h1 class="mb-4">LLM Skills Bench — Dashboard</h1>
+
+  <div id="empty-state" class="empty-state d-none mb-4">
+    No results found. Run <code>llm-bench run --model &lt;model&gt;</code> first.
+  </div>
+
+  <!-- Run selector -->
+  <div class="mb-4" id="selector-section">
+    <label for="run-select" class="form-label fw-bold">Select Run</label>
+    <select id="run-select" class="form-select w-auto"></select>
+  </div>
+
+  <!-- Radar chart -->
+  <div class="card mb-4">
+    <div class="card-header fw-bold">Skill Radar</div>
+    <div class="card-body">
+      <div id="radar-wrap">
+        <canvas id="radar-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Run history table -->
+  <div class="card mb-4">
+    <div class="card-header fw-bold">Run History</div>
+    <div class="card-body p-0">
+      <div id="history-wrap">
+        <table class="table table-sm table-striped mb-0" id="history-table">
+          <thead class="table-dark sticky-top">
+            <tr>
+              <th>Run ID</th>
+              <th>Model</th>
+              <th>Date</th>
+              <th>Skills</th>
+              <th>Overall Score</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model comparison -->
+  <div class="card mb-4">
+    <div class="card-header fw-bold">Model Comparison</div>
+    <div class="card-body">
+      <div class="d-flex gap-3 align-items-end mb-3 flex-wrap">
+        <div>
+          <label class="form-label mb-1">Model A</label>
+          <select id="compare-left" class="form-select"></select>
+        </div>
+        <div>
+          <label class="form-label mb-1">Model B</label>
+          <select id="compare-right" class="form-select"></select>
+        </div>
+        <button class="btn btn-primary" id="compare-btn">Compare</button>
+      </div>
+      <div id="compare-result"></div>
+    </div>
+  </div>
+
+<script>
+let allRuns = [];
+let radarChart = null;
+
+function overallScore(run) {
+  const vals = Object.values(run.summary || {});
+  if (!vals.length) return 0;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+function formatDate(ts) {
+  if (!ts) return '—';
+  try { return new Date(ts).toLocaleString(); } catch { return ts; }
+}
+
+function renderRadar(run) {
+  const labels = Object.keys(run.summary || {});
+  const data = Object.values(run.summary || {});
+  const ctx = document.getElementById('radar-chart').getContext('2d');
+  if (radarChart) { radarChart.destroy(); radarChart = null; }
+  radarChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        label: run.model || run.run_id,
+        data,
+        fill: true,
+        backgroundColor: 'rgba(13,110,253,0.15)',
+        borderColor: 'rgba(13,110,253,0.8)',
+        pointBackgroundColor: 'rgba(13,110,253,1)',
+      }]
+    },
+    options: {
+      scales: { r: { min: 0, max: 1, ticks: { stepSize: 0.2 } } },
+      plugins: { legend: { display: true } }
+    }
+  });
+}
+
+function populateHistory(runs) {
+  const tbody = document.getElementById('history-body');
+  tbody.innerHTML = '';
+  runs.forEach(run => {
+    const score = overallScore(run);
+    const skills = Object.keys(run.summary || {}).join(', ') || '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><code>${run.run_id || '—'}</code></td>
+      <td>${run.model || '—'}</td>
+      <td>${formatDate(run.timestamp)}</td>
+      <td>${skills}</td>
+      <td>${score.toFixed(2)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function populateRunSelect(runs) {
+  const sel = document.getElementById('run-select');
+  sel.innerHTML = '';
+  runs.forEach((run, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${run.model || '?'} — ${formatDate(run.timestamp)} (${run.run_id || '?'})`;
+    sel.appendChild(opt);
+  });
+}
+
+function populateModelSelects(runs) {
+  // Get unique model names, use most recent run per model
+  const seen = new Set();
+  const models = [];
+  runs.forEach(r => {
+    if (r.model && !seen.has(r.model)) { seen.add(r.model); models.push(r.model); }
+  });
+  ['compare-left', 'compare-right'].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '';
+    models.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function bestRunForModel(model) {
+  return allRuns.find(r => r.model === model) || null;
+}
+
+document.getElementById('compare-btn').addEventListener('click', () => {
+  const leftModel = document.getElementById('compare-left').value;
+  const rightModel = document.getElementById('compare-right').value;
+  const leftRun = bestRunForModel(leftModel);
+  const rightRun = bestRunForModel(rightModel);
+  const container = document.getElementById('compare-result');
+  if (!leftRun && !rightRun) { container.innerHTML = '<p class="text-muted">No data for selected models.</p>'; return; }
+
+  const allSkills = new Set([
+    ...Object.keys((leftRun || {}).summary || {}),
+    ...Object.keys((rightRun || {}).summary || {})
+  ]);
+  let rows = '';
+  allSkills.forEach(skill => {
+    const l = leftRun ? ((leftRun.summary || {})[skill] ?? '—') : '—';
+    const r = rightRun ? ((rightRun.summary || {})[skill] ?? '—') : '—';
+    const lStr = typeof l === 'number' ? l.toFixed(2) : l;
+    const rStr = typeof r === 'number' ? r.toFixed(2) : r;
+    rows += `<tr><td>${skill}</td><td>${lStr}</td><td>${rStr}</td></tr>`;
+  });
+
+  container.innerHTML = `
+    <table class="table table-bordered table-sm">
+      <thead class="table-secondary">
+        <tr><th>Skill</th><th>${leftModel || '—'}</th><th>${rightModel || '—'}</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+});
+
+document.getElementById('run-select').addEventListener('change', function() {
+  const run = allRuns[parseInt(this.value, 10)];
+  if (run) renderRadar(run);
+});
+
+async function init() {
+  const resp = await fetch('/api/runs');
+  allRuns = await resp.json();
+
+  if (!allRuns.length) {
+    document.getElementById('empty-state').classList.remove('d-none');
+    document.getElementById('selector-section').classList.add('d-none');
+    return;
+  }
+
+  populateRunSelect(allRuns);
+  populateHistory(allRuns);
+  populateModelSelects(allRuns);
+  renderRadar(allRuns[0]);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -8,6 +8,15 @@ Every team building on LLMs needs a reproducible answer to: *"Is model X actuall
 
 ## What works now
 
+M4 — FastAPI web dashboard:
+
+- `dashboard.py`: `create_app(results_dir)` factory returning a FastAPI app
+- `GET /` — single-page HTML dashboard (Jinja2 + Bootstrap 5 + Chart.js via CDN)
+- `GET /api/runs` — returns all run JSONs from `./results/`, sorted newest first
+- `GET /api/runs/{run_id}` — returns one run by ID (404 if missing)
+- Dashboard features: per-skill radar chart for selected run, scrollable run history table (model / date / overall score), two-column model comparison panel
+- `llm-bench serve --port 8080 --results-dir ./results` is fully operational
+
 M3 — eval runner + model adapters:
 
 - `adapters.py`: `ModelAdapter` ABC with `OpenAIAdapter` (`gpt-*`, `o1-*`, `o3-*`), `AnthropicAdapter` (`claude-*`), and `get_adapter()` factory
@@ -61,12 +70,14 @@ llm-skills-bench/
 │   ├── scorers.py      # exact, fuzzy, code_execution, format_check, llm-judge (M3)
 │   ├── runner.py       # run_benchmark(), TaskResult, RunResult (M3)
 │   ├── skills/         # YAML skill catalog — 50 tasks (M2)
-│   └── dashboard/      # FastAPI + Chart.js server (planned M4)
+│   ├── dashboard.py    # FastAPI app factory + API routes (M4)
+│   └── templates/      # Jinja2 HTML template (M4)
 ├── results/            # Timestamped JSON run outputs (written by M3 runner)
 └── tests/
     ├── test_scaffold.py   # Package + CLI smoke tests (M1)
     ├── test_catalog.py    # Schema validation + catalog loading (M2)
-    └── test_runner.py     # Scorer unit tests + run_benchmark mock integration (M3)
+    ├── test_runner.py     # Scorer unit tests + run_benchmark mock integration (M3)
+    └── test_dashboard.py  # FastAPI dashboard API + HTML tests (M4)
 ```
 
 ```
@@ -117,8 +128,9 @@ llm-bench run --model claude-3-5-sonnet-20241022 --skills knowledge
 llm-bench run --model gpt-4o  # all skills
 llm-bench run --model gpt-4o --judge-model gpt-4o-mini  # cheaper judge
 
-# Coming in M4:
+# Start the web dashboard (M4)
 llm-bench serve --port 8080
+llm-bench serve --port 8080 --results-dir ./results
 ```
 
 Set your API key before running:
@@ -136,7 +148,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 | M1 | ✅ Done | Scaffold, README, pyproject.toml |
 | M2 | ✅ Done | YAML skill catalog (50 tasks), `llm-bench list` |
 | M3 | ✅ Done | Model adapters (OpenAI, Anthropic) + `run` command, scorers, JSON results |
-| M4 | Planned | FastAPI dashboard: radar chart, run history, comparison |
+| M4 | ✅ Done | FastAPI dashboard: radar chart, run history, model comparison |
 
 ## License
 

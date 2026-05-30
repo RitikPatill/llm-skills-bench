@@ -28,7 +28,7 @@ llm-bench = "llm_skills_bench.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"llm_skills_bench" = ["skills/*.yaml"]
+"llm_skills_bench" = ["skills/*.yaml", "templates/*.html"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
