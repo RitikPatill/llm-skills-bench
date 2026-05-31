@@ -1,155 +1,113 @@
 # LLM Skills Bench
 
-A lightweight, self-hostable evaluation framework for measuring and tracking LLM performance across configurable skill dimensions.
+> Run configurable skill benchmarks against any OpenAI/Anthropic model, score with LLM-as-judge, and visualize results in a web dashboard.
 
-## Why
+![demo](demo.gif)
 
-Every team building on LLMs needs a reproducible answer to: *"Is model X actually better than model Y for our use case?"* Most solutions are either heavyweight research infrastructure (HELM, lm-evaluation-harness) or proprietary cloud dashboards. LLM Skills Bench fills the gap: a hackable, local-first tool you can run in minutes.
+## What it is
 
-## What works now
+LLM Skills Bench is a self-hostable evaluation framework for measuring LLM performance across five skill dimensions: coding, reasoning, knowledge, instruction following, and tool use. Each skill is defined in YAML — prompt template, expected output, and scoring method — so the catalog is fully auditable and extensible without touching Python. Three scoring backends ship out of the box: fuzzy string match, sandboxed subprocess execution for Python problems, and LLM-as-judge for open-ended quality assessment.
 
-M4 — FastAPI web dashboard:
+The workflow is: run a benchmark from the CLI, get a timestamped JSON result file, open the dashboard to compare runs. There is no database. Results are plain JSON on disk, which means they are easy to version, share, or post-process with any tool.
 
-- `dashboard.py`: `create_app(results_dir)` factory returning a FastAPI app
-- `GET /` — single-page HTML dashboard (Jinja2 + Bootstrap 5 + Chart.js via CDN)
-- `GET /api/runs` — returns all run JSONs from `./results/`, sorted newest first
-- `GET /api/runs/{run_id}` — returns one run by ID (404 if missing)
-- Dashboard features: per-skill radar chart for selected run, scrollable run history table (model / date / overall score), two-column model comparison panel
-- `llm-bench serve --port 8080 --results-dir ./results` is fully operational
+## Quickstart
 
-M3 — eval runner + model adapters:
+```bash
+git clone https://github.com/RitikPatill/llm-skills-bench.git
+cd llm-skills-bench
+pip install -e .
 
-- `adapters.py`: `ModelAdapter` ABC with `OpenAIAdapter` (`gpt-*`, `o1-*`, `o3-*`), `AnthropicAdapter` (`claude-*`), and `get_adapter()` factory
-- `scorers.py`: five scoring functions — `score_exact`, `score_fuzzy`, `score_code_execution`, `score_format_check`, `score_llm_judge` — plus `score_task()` dispatcher
-- `runner.py`: `run_benchmark()` — filters catalog, calls model, scores each task, writes timestamped JSON to `./results/`
-- `llm-bench run --model gpt-4o --skills coding,reasoning` is fully operational
-  - `--results-dir` (default `./results`) and `--judge-model` options added
-  - Per-skill summary table on completion; results persisted as timestamped JSON under `./results/`
+export OPENAI_API_KEY=sk-...        # for OpenAI models
+# export ANTHROPIC_API_KEY=sk-ant-... # for Anthropic models
 
-M2 — skill catalog complete:
+llm-bench run --model gpt-4o --skills coding,reasoning
+llm-bench serve --port 8080
+```
 
-- Pydantic v2 `SkillTask` schema (`schema.py`) with `ScoringMethod` and `Difficulty` enums
-- `catalog.py` loads and validates all YAML files from `src/llm_skills_bench/skills/`
-- 50 benchmark tasks across 5 YAML files:
-  - `coding.yaml` — 10 tasks, `code_execution` scoring (sum, palindrome, Fibonacci, …)
-  - `reasoning.yaml` — 10 tasks, `fuzzy` + `llm_judge` scoring
-  - `knowledge.yaml` — 10 tasks, `fuzzy` scoring with reference answers
-  - `instruction_following.yaml` — 10 tasks, `format_check` scoring
-  - `tool_use.yaml` — 10 tasks, `format_check` + `fuzzy` scoring
-- `llm-bench list` pretty-prints the full catalog as a `rich` table with task count summary
+## Usage
 
-M1 — scaffold:
+**Running benchmarks**
 
-- Python package (`src/llm_skills_bench/`) installable via `pip install -e .`
-- Click CLI with `run`, `serve`, and `list` commands
-- `pyproject.toml` with all runtime dependencies pinned
-- MIT license, `.gitignore`, `requirements.txt`
+```bash
+# Run all 50 built-in tasks against a model
+llm-bench run --model gpt-4o
 
-## Skills
+# Run a subset of skills, use a separate judge model
+llm-bench run --model claude-3-5-sonnet-20241022 \
+    --skills reasoning,knowledge \
+    --judge-model gpt-4o
 
-Five built-in skill dimensions, each configurable via YAML:
+# List every task in the built-in catalog
+llm-bench list
 
-| Skill | Scoring Method |
-|---|---|
-| **Coding** | Sandboxed `subprocess` test-case execution |
-| **Reasoning** | LLM-as-judge on multi-step logic and math |
-| **Knowledge** | Fuzzy string-match against reference answers |
-| **Instruction Following** | Format compliance (JSON validity, word count, list structure) |
-| **Tool Use** | Structured output and function-call schema parsing |
+# Validate a custom skill directory before running
+llm-bench list --skills-dir ./my_skills
+```
+
+After each run, a timestamped JSON file lands in `./results/`. The terminal prints a per-skill score table via Rich.
+
+**Dashboard**
+
+`llm-bench serve` starts a FastAPI server at `http://localhost:8080`. The interface has three panels: a radar chart showing per-skill scores for any selected run, a scrollable run history table, and a side-by-side model comparison view. No login required; it reads directly from the local results directory.
+
+**Adding a custom skill**
+
+Create a YAML file with one or more tasks, each specifying a `prompt_template`, `scoring_method`, and any `metadata` the scorer needs (e.g. `test_code` for `code_execution`, `criteria` for `llm_judge`). Copy it into `src/llm_skills_bench/skills/` and pass the skill name to `--skills`.
 
 ## Architecture
 
 ```
+ CLI (Click)
+  │
+  ├── run ──▶ Skill Catalog (YAML → SkillTask)
+  │               │
+  │           ModelAdapter (OpenAI | Anthropic)
+  │               │
+  │           Scorers (exact | fuzzy | code_execution | format_check | llm_judge)
+  │               │
+  │           results/<run_id>.json
+  │
+  └── serve ──▶ FastAPI Dashboard
+                    │
+                reads results/*.json
+```
+
+## Project structure
+
+```
 llm-skills-bench/
 ├── src/llm_skills_bench/
-│   ├── __init__.py
-│   ├── cli.py          # Click CLI: run, serve, list
-│   ├── schema.py       # Pydantic SkillTask model (M2)
-│   ├── catalog.py      # YAML loader (M2)
-│   ├── adapters.py     # ModelAdapter ABC + OpenAI/Anthropic + get_adapter() (M3)
-│   ├── scorers.py      # exact, fuzzy, code_execution, format_check, llm-judge (M3)
-│   ├── runner.py       # run_benchmark(), TaskResult, RunResult (M3)
-│   ├── skills/         # YAML skill catalog — 50 tasks (M2)
-│   ├── dashboard.py    # FastAPI app factory + API routes (M4)
-│   └── templates/      # Jinja2 HTML template (M4)
-├── results/            # Timestamped JSON run outputs (written by M3 runner)
-└── tests/
-    ├── test_scaffold.py   # Package + CLI smoke tests (M1)
-    ├── test_catalog.py    # Schema validation + catalog loading (M2)
-    ├── test_runner.py     # Scorer unit tests + run_benchmark mock integration (M3)
-    └── test_dashboard.py  # FastAPI dashboard API + HTML tests (M4)
-```
-
-```
-                ┌──────────────┐
-  CLI ─────────▶│  run engine  │──▶ results/*.json
-                └──────┬───────┘
-                       │
-          ┌────────────▼────────────┐
-          │     ModelAdapter        │
-          │  OpenAI | Anthropic     │
-          └─────────────────────────┘
-                       │
-          ┌────────────▼────────────┐
-          │     Skill Catalog       │
-          │  YAML ──▶ Task objects  │
-          └─────────────────────────┘
-                       │
-          ┌────────────▼────────────┐
-          │      Scorer             │
-          │  exact | fuzzy          │
-          │  code_execution         │
-          │  format_check           │
-          │  llm-judge              │
-          └─────────────────────────┘
-
-  llm-bench serve ──▶ FastAPI dashboard (radar chart, history, comparison)
-```
-
-## Getting Started
-
-```bash
-pip install -e .
-llm-bench --help
-```
-
-### CLI
-
-```bash
-# List the full skill catalog (50 tasks across 5 skill dimensions)
-llm-bench list
-
-# Filter by a custom skills directory
-llm-bench list --skills-dir /path/to/skills
-
-# Run the benchmark (M3)
-llm-bench run --model gpt-4o --skills coding,reasoning
-llm-bench run --model claude-3-5-sonnet-20241022 --skills knowledge
-llm-bench run --model gpt-4o  # all skills
-llm-bench run --model gpt-4o --judge-model gpt-4o-mini  # cheaper judge
-
-# Start the web dashboard (M4)
-llm-bench serve --port 8080
-llm-bench serve --port 8080 --results-dir ./results
-```
-
-Set your API key before running:
-
-```bash
-export OPENAI_API_KEY=sk-...
-# or
-export ANTHROPIC_API_KEY=sk-ant-...
+│   ├── cli.py          # Click entry point: run, serve, list
+│   ├── schema.py       # Pydantic models: SkillTask, TaskResult, RunResult
+│   ├── catalog.py      # YAML loader
+│   ├── adapters.py     # ModelAdapter ABC + OpenAI/Anthropic implementations
+│   ├── scorers.py      # Five scoring backends
+│   ├── runner.py       # Orchestrates a full benchmark run
+│   ├── dashboard.py    # FastAPI app + API routes
+│   ├── skills/         # Built-in YAML catalog — 50 tasks across 5 skills
+│   └── templates/      # Jinja2 HTML for the dashboard
+├── assets/
+│   └── dashboard.svg   # Dashboard screenshot
+├── tests/              # pytest suite: catalog, runner, dashboard, scaffold
+├── demo.tape           # VHS script to regenerate demo.gif
+└── pyproject.toml      # Package metadata and dependencies
 ```
 
 ## Roadmap
 
-| Milestone | Status | Description |
-|---|---|---|
-| M1 | ✅ Done | Scaffold, README, pyproject.toml |
-| M2 | ✅ Done | YAML skill catalog (50 tasks), `llm-bench list` |
-| M3 | ✅ Done | Model adapters (OpenAI, Anthropic) + `run` command, scorers, JSON results |
-| M4 | ✅ Done | FastAPI dashboard: radar chart, run history, model comparison |
+- [ ] Local model support via Ollama (llama.cpp / Mistral / Llama 3)
+- [ ] Parallel task execution to reduce wall-clock time on large runs
+- [ ] CI integration: compare a run against a baseline and fail on regression
+- [ ] Export results as CSV or Markdown for inclusion in reports
+- [ ] Dashboard authentication for shared or remote deployments
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+---
+
+Built autonomously by [autodev](https://github.com/RitikPatill/autodev),
+a multi-agent orchestrator I designed. Each commit in this repo was
+authored by me; the implementation work was performed by Sonnet under
+the orchestrator's control. Read the orchestrator's README to see how.
