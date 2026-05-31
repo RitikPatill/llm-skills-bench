@@ -2,83 +2,91 @@
 
 A lightweight, self-hostable evaluation framework for measuring and tracking LLM performance across configurable skill dimensions.
 
-## Why
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue) ![MIT License](https://img.shields.io/badge/license-MIT-green) ![No external DB](https://img.shields.io/badge/database-none-lightgrey)
 
-Every team building on LLMs needs a reproducible answer to: *"Is model X actually better than model Y for our use case?"* Most solutions are either heavyweight research infrastructure (HELM, lm-evaluation-harness) or proprietary cloud dashboards. LLM Skills Bench fills the gap: a hackable, local-first tool you can run in minutes.
+---
 
-## What works now
+## Demo
 
-M4 — FastAPI web dashboard:
+> Run `vhs demo.tape` to regenerate `demo.gif` (requires [vhs](https://github.com/charmbracelet/vhs))
 
-- `dashboard.py`: `create_app(results_dir)` factory returning a FastAPI app
-- `GET /` — single-page HTML dashboard (Jinja2 + Bootstrap 5 + Chart.js via CDN)
-- `GET /api/runs` — returns all run JSONs from `./results/`, sorted newest first
-- `GET /api/runs/{run_id}` — returns one run by ID (404 if missing)
-- Dashboard features: per-skill radar chart for selected run, scrollable run history table (model / date / overall score), two-column model comparison panel
-- `llm-bench serve --port 8080 --results-dir ./results` is fully operational
+![Demo](demo.gif)
 
-M3 — eval runner + model adapters:
+---
 
-- `adapters.py`: `ModelAdapter` ABC with `OpenAIAdapter` (`gpt-*`, `o1-*`, `o3-*`), `AnthropicAdapter` (`claude-*`), and `get_adapter()` factory
-- `scorers.py`: five scoring functions — `score_exact`, `score_fuzzy`, `score_code_execution`, `score_format_check`, `score_llm_judge` — plus `score_task()` dispatcher
-- `runner.py`: `run_benchmark()` — filters catalog, calls model, scores each task, writes timestamped JSON to `./results/`
-- `llm-bench run --model gpt-4o --skills coding,reasoning` is fully operational
-  - `--results-dir` (default `./results`) and `--judge-model` options added
-  - Per-skill summary table on completion; results persisted as timestamped JSON under `./results/`
+## Quick Start
 
-M2 — skill catalog complete:
+```bash
+git clone https://github.com/your-org/llm-skills-bench
+cd llm-skills-bench
+pip install -e .
 
-- Pydantic v2 `SkillTask` schema (`schema.py`) with `ScoringMethod` and `Difficulty` enums
-- `catalog.py` loads and validates all YAML files from `src/llm_skills_bench/skills/`
-- 50 benchmark tasks across 5 YAML files:
-  - `coding.yaml` — 10 tasks, `code_execution` scoring (sum, palindrome, Fibonacci, …)
-  - `reasoning.yaml` — 10 tasks, `fuzzy` + `llm_judge` scoring
-  - `knowledge.yaml` — 10 tasks, `fuzzy` scoring with reference answers
-  - `instruction_following.yaml` — 10 tasks, `format_check` scoring
-  - `tool_use.yaml` — 10 tasks, `format_check` + `fuzzy` scoring
-- `llm-bench list` pretty-prints the full catalog as a `rich` table with task count summary
+export OPENAI_API_KEY=sk-...   # or ANTHROPIC_API_KEY=sk-ant-...
 
-M1 — scaffold:
+llm-bench run --model gpt-4o --skills coding,reasoning
+llm-bench serve --port 8080
+```
 
-- Python package (`src/llm_skills_bench/`) installable via `pip install -e .`
-- Click CLI with `run`, `serve`, and `list` commands
-- `pyproject.toml` with all runtime dependencies pinned
-- MIT license, `.gitignore`, `requirements.txt`
+---
 
-## Skills
+## CLI Reference
 
-Five built-in skill dimensions, each configurable via YAML:
+| Command | Option | Default | Description |
+|---|---|---|---|
+| `run` | `--model` | required | Model name (`gpt-4o`, `claude-3-5-sonnet-20241022`, …) |
+| `run` | `--skills` | all | Comma-separated skill filter |
+| `run` | `--results-dir` | `./results` | Where to write JSON |
+| `run` | `--judge-model` | same as `--model` | Model used for `llm_judge` scoring |
+| `serve` | `--port` | `8080` | HTTP port |
+| `serve` | `--results-dir` | `./results` | Directory to read results from |
+| `list` | `--skills-dir` | built-in | Path to YAML catalog directory |
 
-| Skill | Scoring Method |
-|---|---|
-| **Coding** | Sandboxed `subprocess` test-case execution |
-| **Reasoning** | LLM-as-judge on multi-step logic and math |
-| **Knowledge** | Fuzzy string-match against reference answers |
-| **Instruction Following** | Format compliance (JSON validity, word count, list structure) |
-| **Tool Use** | Structured output and function-call schema parsing |
+---
+
+## Built-in Skills
+
+| Skill | Scoring Method | # Tasks |
+|---|---|---|
+| **Coding** | Sandboxed `subprocess` test-case execution | 10 |
+| **Reasoning** | LLM-as-judge on multi-step logic and math | 10 |
+| **Knowledge** | Fuzzy string-match against reference answers | 10 |
+| **Instruction Following** | Format compliance (JSON validity, word count, list structure) | 10 |
+| **Tool Use** | Structured output and function-call schema parsing | 10 |
+
+---
+
+## Dashboard
+
+![Dashboard](assets/dashboard.svg)
+
+The web dashboard (`llm-bench serve`) has three panels:
+
+- **Skill Radar** — pentagon chart showing per-skill scores for the selected run
+- **Run History** — scrollable table of all past runs (model · date · overall score)
+- **Model Comparison** — side-by-side per-skill breakdown across two selected models
+
+---
 
 ## Architecture
 
+```mermaid
+flowchart LR
+    CLI["llm-bench CLI\n(Click)"]
+    Catalog["Skill Catalog\n(YAML → SkillTask)"]
+    Adapter["ModelAdapter\nOpenAI | Anthropic"]
+    Scorer["Scorers\nexact | fuzzy | code_exec\nformat_check | llm_judge"]
+    Results["results/*.json"]
+    Dashboard["FastAPI Dashboard\n/ radar · history · compare"]
+
+    CLI -->|"run"| Catalog
+    Catalog --> Adapter
+    Adapter --> Scorer
+    Scorer --> Results
+    CLI -->|"serve"| Dashboard
+    Dashboard -->|"reads"| Results
 ```
-llm-skills-bench/
-├── src/llm_skills_bench/
-│   ├── __init__.py
-│   ├── cli.py          # Click CLI: run, serve, list
-│   ├── schema.py       # Pydantic SkillTask model (M2)
-│   ├── catalog.py      # YAML loader (M2)
-│   ├── adapters.py     # ModelAdapter ABC + OpenAI/Anthropic + get_adapter() (M3)
-│   ├── scorers.py      # exact, fuzzy, code_execution, format_check, llm-judge (M3)
-│   ├── runner.py       # run_benchmark(), TaskResult, RunResult (M3)
-│   ├── skills/         # YAML skill catalog — 50 tasks (M2)
-│   ├── dashboard.py    # FastAPI app factory + API routes (M4)
-│   └── templates/      # Jinja2 HTML template (M4)
-├── results/            # Timestamped JSON run outputs (written by M3 runner)
-└── tests/
-    ├── test_scaffold.py   # Package + CLI smoke tests (M1)
-    ├── test_catalog.py    # Schema validation + catalog loading (M2)
-    ├── test_runner.py     # Scorer unit tests + run_benchmark mock integration (M3)
-    └── test_dashboard.py  # FastAPI dashboard API + HTML tests (M4)
-```
+
+<details><summary>ASCII version</summary>
 
 ```
                 ┌──────────────┐
@@ -100,46 +108,93 @@ llm-skills-bench/
           │  exact | fuzzy          │
           │  code_execution         │
           │  format_check           │
-          │  llm-judge              │
+          │  llm_judge              │
           └─────────────────────────┘
 
   llm-bench serve ──▶ FastAPI dashboard (radar chart, history, comparison)
 ```
 
-## Getting Started
+</details>
 
-```bash
-pip install -e .
-llm-bench --help
+---
+
+## Extending Skills
+
+Add a custom benchmark in three steps.
+
+**1. Create a YAML file** anywhere on disk (or alongside the built-in ones in
+`src/llm_skills_bench/skills/`):
+
+```yaml
+# my_skills/summarisation.yaml
+tasks:
+  - task_id: summ_001
+    skill: summarisation
+    prompt_template: |
+      Summarise the following text in exactly one sentence:
+
+      {text}
+    expected_output: null          # not required for llm_judge
+    scoring_method: llm_judge
+    difficulty: medium
+    tags: [summarisation, fluency]
+    metadata:
+      criteria: "The summary is one sentence, accurate, and fluent."
+      text: |
+        The quick brown fox jumps over the lazy dog. Dogs are common
+        household pets known for loyalty. Foxes are wild canids.
 ```
 
-### CLI
+**2. Drop your YAML into the built-in directory or use `llm-bench list` to validate:**
 
 ```bash
-# List the full skill catalog (50 tasks across 5 skill dimensions)
-llm-bench list
+# Verify tasks load correctly from a custom directory
+llm-bench list --skills-dir ./my_skills
 
-# Filter by a custom skills directory
-llm-bench list --skills-dir /path/to/skills
-
-# Run the benchmark (M3)
-llm-bench run --model gpt-4o --skills coding,reasoning
-llm-bench run --model claude-3-5-sonnet-20241022 --skills knowledge
-llm-bench run --model gpt-4o  # all skills
-llm-bench run --model gpt-4o --judge-model gpt-4o-mini  # cheaper judge
-
-# Start the web dashboard (M4)
-llm-bench serve --port 8080
-llm-bench serve --port 8080 --results-dir ./results
+# Then copy to built-in directory and run
+cp my_skills/summarisation.yaml src/llm_skills_bench/skills/
+llm-bench run --model gpt-4o --skills summarisation
 ```
 
-Set your API key before running:
+**3. Scoring methods at a glance:**
 
-```bash
-export OPENAI_API_KEY=sk-...
-# or
-export ANTHROPIC_API_KEY=sk-ant-...
+| `scoring_method` | When to use | `expected_output` required? |
+|---|---|---|
+| `exact` | Fixed single-token answers | Yes |
+| `fuzzy` | Short free-text answers | Yes |
+| `code_execution` | Python functions; set `metadata.test_code` | No |
+| `format_check` | JSON keys, word limit, list structure | No |
+| `llm_judge` | Open-ended quality; set `metadata.criteria` | No |
+
+---
+
+## Project Layout
+
 ```
+llm-skills-bench/
+├── src/llm_skills_bench/
+│   ├── __init__.py
+│   ├── cli.py          # Click CLI: run, serve, list
+│   ├── schema.py       # Pydantic SkillTask model
+│   ├── catalog.py      # YAML loader
+│   ├── adapters.py     # ModelAdapter ABC + OpenAI/Anthropic + get_adapter()
+│   ├── scorers.py      # exact, fuzzy, code_execution, format_check, llm_judge
+│   ├── runner.py       # run_benchmark(), TaskResult, RunResult
+│   ├── skills/         # YAML skill catalog — 50 tasks
+│   ├── dashboard.py    # FastAPI app factory + API routes
+│   └── templates/      # Jinja2 HTML template
+├── assets/
+│   └── dashboard.svg   # Dashboard screenshot
+├── results/            # Timestamped JSON run outputs
+├── demo.tape           # VHS script — run `vhs demo.tape` to generate demo.gif
+└── tests/
+    ├── test_scaffold.py
+    ├── test_catalog.py
+    ├── test_runner.py
+    └── test_dashboard.py
+```
+
+---
 
 ## Roadmap
 
@@ -149,6 +204,9 @@ export ANTHROPIC_API_KEY=sk-ant-...
 | M2 | ✅ Done | YAML skill catalog (50 tasks), `llm-bench list` |
 | M3 | ✅ Done | Model adapters (OpenAI, Anthropic) + `run` command, scorers, JSON results |
 | M4 | ✅ Done | FastAPI dashboard: radar chart, run history, model comparison |
+| M5 | ✅ Done | Polish README, demo GIF, dashboard screenshot, Extending Skills guide |
+
+---
 
 ## License
 
